@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogues</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; scroll-behavior: smooth; }
+        .sidebar-link:hover { background-color: #1F2937; color: white; }
+        .card { background: white; border: 1px solid #E5E7EB; border-radius: 12px; transition: 0.2s ease; overflow: hidden; }
+        .card:hover { border-color: #9CA3AF; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #111827; color: white; transition: 0.2s; }
+        .btn-primary:hover { background-color: #374151; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <aside class="w-64 bg-[#111827] text-gray-400 flex flex-col fixed h-full">
+        <div class="p-8 text-white font-bold text-xl tracking-tight">ADMIN</div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{{ url_for('index') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">Home</a>
+            <a href="{{ url_for('products') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">Products</a>
+            <a href="{{ url_for('catalogues') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">Catalogues</a>
+            <a href="{{ url_for('signup') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Sign Up
+            </a>
+        </nav>
+    </aside>
+
+    <main class="ml-64 flex-1">
+        <header class="h-20 bg-white border-b border-gray-200 px-10 flex items-center justify-between sticky top-0 z-10">
+            <h2 class="text-lg font-semibold text-gray-800">Active Inventory</h2>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center bg-gray-100 rounded-full border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all">
+                    <div class="pl-4">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="filterCatalogues()" placeholder="Search catalogues..." class="bg-transparent pl-2 pr-4 py-2 text-sm outline-none w-48 lg:w-64">
+                </div>
+                <button onclick="openModal('addModal')" class="btn-primary px-5 py-2 rounded-full text-sm font-medium transition">+ Add New</button>
+            </div>
+        </header>
+
+        <div class="p-10 max-w-7xl mx-auto">
+            <div id="catalogueGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for c in catalogues %}
+<div class="card group relative catalogue-card cursor-pointer hover:border-blue-500 transition-all" 
+     data-id="{{ c.id }}"
+     data-name="{{ c.name | lower }}"
+     data-image-path="{{ c.image_path }}"
+     onclick="showProducts(this.dataset.id, this.dataset.name, this.dataset.imagePath)">
+    <div class="absolute top-2 right-2 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition">
+                       <button onclick="event.stopPropagation(); openEditModal('{{ c.id }}', this.getAttribute('data-name'))" 
+        data-name="{{ c.name }}"
+        class="p-2 bg-white rounded-lg shadow-md hover:text-blue-600">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+    </svg>
+</button>
+                        <a href="{{ url_for('delete_catalogue', id=c.id) }}" onclick="event.stopPropagation(); return confirm('Delete this item?')" class="p-2 bg-white rounded-lg shadow-md hover:text-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </a>
+                    </div>
+    <div class="p-6">
+        <h3 class="font-bold text-gray-800 text-lg">{{ c.name }}</h3>
+        <p class="text-sm text-blue-500 mt-2">View Collection →</p>
+    </div>
+</div>
+{% endfor %}
+            </div>
+
+            <div id="noResults" class="hidden text-center py-20">
+                <p class="text-gray-400">No catalogues found matching your search.</p>
+            </div>
+
+            <div id="productSection" class="hidden mt-16 pt-10 border-t border-gray-200">
+
+                <div class="flex items-center justify-between mb-8">
+                    <h2 id="selectedCatTitle" class="text-2xl font-bold text-gray-900">Catalogue Items</h2>
+                    <button onclick="hideProducts()" class="text-sm text-gray-500 hover:text-gray-900">Close View</button>
+                </div>
+                <div id="productGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 pb-20">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="addModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-bold mb-6 text-gray-900">Register New Catalogue</h2>
+            <form action="/add_catalogue" method="POST" class="space-y-5">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Title</label>
+                    <input type="text" name="name" class="w-full border border-gray-200 p-3 rounded-lg mt-1 outline-none focus:border-gray-900" required>
+                </div>
+                <div class="flex gap-4 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeModal('addModal')" class="flex-1 py-3 text-gray-500 font-medium text-sm">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-lg font-bold text-sm hover:shadow-lg transition">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl">
+        <h2 class="text-xl font-bold mb-6 text-gray-900">Edit Catalogue</h2>
+        <form id="editForm" method="POST" class="space-y-5">
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Title</label>
+                <input type="text" name="name" id="edit_name" class="w-full border border-gray-200 p-3 rounded-lg mt-1 outline-none focus:border-gray-900" required>
+            </div>
+            <div class="flex gap-4 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeModal('editModal')" class="flex-1 py-3 text-gray-500 font-medium text-sm">Cancel</button>
+                <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-lg font-bold text-sm hover:shadow-lg transition">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+ 
+<script>
+    // 1. Data Initialization
+    const allProducts = {{ products_list | tojson | safe }};
+
+    // 2. Main Function to show products
+    function showProducts(catId, catName, catImage) {
+        const section = document.getElementById('productSection');
+        const grid = document.getElementById('productGrid');
+        const title = document.getElementById('selectedCatTitle');
+         
+        
+        
+        if (!section || !grid) return; // Safety check
+
+        section.classList.remove('hidden');
+        title.innerText = catName + " Collection";
+        grid.innerHTML = ''; 
+
+        const filtered = allProducts.filter(p => {
+            return String(p.catalogue_id).trim() === String(catId).trim();
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">No items found.</div>`;
+        } else {
+            filtered.forEach(p => {
+                grid.innerHTML += `
+                    <div class="card p-4 border rounded-xl">
+    <img src="/static/uploads/${p.image_path}" alt="${p.name}" class="w-full h-40 object-cover rounded-lg mb-2">
+    <h4 class="font-bold">${p.name}</h4>
+    <p class="text-blue-600">${p.price} ETB</p>
+    <p class="text-blue-600">${p.stock} in Stock</p>
+  </div>`;
+            });
+        }
+        section.scrollIntoView({ behavior: 'smooth' });
+    } // <--- This bracket closes showProducts
+
+    // 3. Helper Functions
+    function openModal(id) { 
+        document.getElementById(id).classList.remove('hidden'); 
+    }
+function openEditModal(id, name) {
+    // 1. Show the modal
+    const modal = document.getElementById('editModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    
+    // 2. Set the form action
+    const form = document.getElementById('editForm');
+    form.action = "/edit_catalogue/" + id;
+    
+    // 3. Fill the name input
+    const nameInput = document.getElementById('edit_name');
+    if (nameInput) {
+        nameInput.value = name; 
+    }
+}
+    function closeModal(id) { 
+        document.getElementById(id).classList.add('hidden'); 
+    }
+
+    function filterCatalogues() {
+        const filter = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.getElementsByClassName('catalogue-card');
+        
+        Array.from(cards).forEach(card => {
+            const name = card.getAttribute('data-name') || "";
+            card.style.display = name.includes(filter) ? "" : "none";
+        });
+        
+    }
+    function hideProducts() {
+    const section = document.getElementById('productSection');
+    if (section) {
+        section.classList.add('hidden');
+        // Optional: reset title and grid
+        document.getElementById('selectedCatTitle').innerText = 'Catalogue Items';
+        document.getElementById('productGrid').innerHTML = '';
+    }
+}
+</script>
+</body>
+</html>

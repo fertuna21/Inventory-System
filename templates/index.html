@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Inventory Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        .sidebar-link:hover { background-color: #1F2937; color: white; }
+        .card { background: white; border: 1px solid #E5E7EB; border-radius: 12px; transition: 0.2s ease; }
+        .card:hover { border-color: #9CA3AF; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #111827; color: white; transition: 0.2s; }
+        .btn-primary:hover { background-color: #374151; }
+    </style>
+
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<style>[x-cloak] { display: none !important; }</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+[x-cloak] { display: none !important; }
+
+/* Makes the notification scrollbar look thin and modern */
+div::-webkit-scrollbar {
+    width: 5px;
+}
+div::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+</style>
+</head>
+  
+<body class="flex min-h-screen">
+    <aside class="w-64 bg-[#111827] text-gray-400 flex flex-col fixed h-full">
+        <div class="p-8 text-white font-bold text-xl tracking-tight">
+            ADMIN
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{{ url_for('index') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                 Home
+            </a>
+            <a href="{{ url_for('products') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                 Products
+            </a>
+            <a href="{{ url_for('catalogues') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                 Catalogues
+            </a>
+            <a href="{{ url_for('signup') }}" class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Sign Up
+            </a>
+        </nav>
+
+         
+    </aside>
+
+    <main class="ml-64 flex-1">
+       {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div id="flash-container" class="fixed top-6 right-6 z-[100] space-y-3 w-80">
+            {% for message in messages %}
+                <div class="flash-message bg-white border-l-4 border-gray-900 p-4 rounded-xl shadow-2xl flex items-start justify-between transform transition-all duration-500 hover:scale-105">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gray-100 p-1.5 rounded-lg">
+                            <svg class="w-4 h-4 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase font-black tracking-widest text-gray-400"></p>
+                            <p class="text-sm font-semibold text-gray-800">{{ message }}</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-900 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+       
+  
+    </a><header class="h-20 bg-white border-b border-gray-200 px-10 flex items-center justify-between sticky top-0 z-10">
+ <h2 class="text-lg font-semibold text-gray-800">Active Inventory</h2>
+<li style="position: relative; list-style: none; overflow: visible;">
+ <a href="{{ url_for('all_notifications') }}" style="position: relative; display: inline-block; padding: 10px;">
+        <i class="fa fa-bell" style="font-size: 20px;"></i>
+        <span id="notificationBadge" 
+              style="position: absolute; top: -2px; right: -2px; 
+                     background: red; color: white; border-radius: 50%; 
+                     width: 18px; height: 18px; display: none; 
+                     align-items: center; justify-content: center; 
+                     font-size: 10px; font-weight: bold; z-index: 50;">
+        </span>
+        
+    </a>
+</li>
+<style>
+    i{
+        opacity: 0.77
+ 
+    }
+</style>  
+        </header>
+        <div class="p-10 max-w-7xl mx-auto space-y-12">
+    
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{ showDetails: false }">
+        <div @click="showDetails = !showDetails"
+             class="bg-blue-600 rounded-xl p-6 text-white shadow-lg cursor-pointer hover:bg-blue-700 transition-all flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+               <div> 
+                <div class="bg-blue-500 p-3 rounded-lg">
+                    <p class="text-blue-100 text-xs font-medium uppercase tracking-wider">Total Sales Today</p>
+                    <h3 class="text-3xl font-bold mt-1">{{ sales_today }} Units</h3>
+                </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </div>
+        </div>    
+            <div class="mt-4 flex items-center gap-1 text-xs text-blue-200">
+                <span>Click to view itemized list</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 transition-transform" :class="showDetails ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="bg-green-600 rounded-xl p-6 text-white shadow-lg flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium uppercase tracking-wider">Daily Earnings</p>
+                    <h3 class="text-3xl font-bold mt-1">{{ "{:,.2f}".format(daily_earnings) }}</h3>
+                </div>
+                <div class="bg-green-500 p-3 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            <p class="text-green-200 text-xs mt-4">Cash flow generated today</p>
+        </div>
+<div x-show="showDetails" x-cloak x-transition:enter="transition ease-out duration-300" 
+             x-transition:enter-start="opacity-0 transform -translate-y-4" 
+             class="col-span-1 md:col-span-2 bg-white border border-blue-100 rounded-xl shadow-sm overflow-hidden mt-2">
+            <div class="bg-blue-50 p-3 border-b border-blue-100">
+                <h4 class="text-blue-800 font-bold text-sm">Itemized Sales Breakdown</h4>
+            </div>
+        
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+  <thead class="bg-gray-50"><tr class="text-left text-xs font-semibold text-gray-500 uppercase"></tr>
+        
+            <th class="px-4 py-2">Product</th>
+            <th class="px-4 py-2 text-center">Qty</th>
+            <th class="px-4 py-2 text-right">Price</th> <th class="px-4 py-2">Time</th>
+        </tr>
+    </thead>  
+    <tbody class="divide-y divide-gray-100">
+        {% for sale in recent_sales %}
+        <tr class="hover:bg-blue-50/30 transition">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ sale.name }}</td>
+            <td class="px-4 py-3 text-sm text-center text-gray-600">{{ sale.quantity }}</td>
+            <td class="px-4 py-3 text-sm text-right font-bold text-green-600">
+                {{ "{:,.2f}".format(sale.total_price) }}
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                {# This assumes sold_at is a string from SQLite #}
+                {{ sale.pretty_time }}
+            </td>
+        </tr>
+        {% else %}
+                     <tr>
+                            <td colspan="3" class="py-6 text-center text-gray-400 italic text-sm">No transactions found for today.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+            
+                 </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white border border-gray-100 p-5 rounded-xl shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Weekly</p>
+            <h4 class="text-xl font-bold text-gray-800 mt-1">{{ "{:,.2f}".format(weekly_earnings) }}</h4>
+            <div class="mt-2 h-1 w-full bg-purple-100 rounded-full overflow-hidden">
+                <div class="h-full bg-purple-500" style="width: 70%"></div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-100 p-5 rounded-xl shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Monthly</p>
+            <h4 class="text-xl font-bold text-gray-800 mt-1">{{ "{:,.2f}".format(monthly_earnings) }}</h4>
+            <div class="mt-2 h-1 w-full bg-indigo-100 rounded-full overflow-hidden">
+                <div class="h-full bg-indigo-500" style="width: 45%"></div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-100 p-5 rounded-xl shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">Yearly</p>
+            <h4 class="text-xl font-bold text-gray-800 mt-1">{{ "{:,.2f}".format(yearly_earnings) }}</h4>
+            <div class="mt-2 h-1 w-full bg-orange-100 rounded-full overflow-hidden">
+                <div class="h-full bg-orange-500" style="width: 90%"></div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700">
+            <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">All Time</p>
+            <h4 class="text-xl font-bold text-white mt-1">{{ "{:,.2f}".format(all_time_earnings) }}</h4>
+            <p class="text-gray-500 text-[10px] mt-2 italic">Lifetime Performance</p>
+        </div>
+    </div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Total Categories</p>
+        <div class="flex items-end gap-2 mt-2">
+            <h3 class="text-3xl font-bold text-gray-900">{{ total_cats }}</h3>
+            <span class="text-xs text-green-500 font-medium mb-1">Active</span>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Total Products</p>
+        <div class="flex items-end gap-2 mt-2">
+            <h3 class="text-3xl font-bold text-gray-900">{{ total_prods }}</h3>
+            <span class="text-xs text-blue-500 font-medium mb-1">In Stock</span>
+        </div>
+    </div>
+    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Total Stock</p>
+        <div class="flex items-baseline gap-2 mt-2">
+            <h3 class="text-3xl font-bold text-gray-900">{{ total_stock }}</h3>
+            <span class="text-xs text-blue-500 font-medium mb-1">Units</span>
+        </div>
+    </div>
+
+    <div class="bg-orange-50 p-6 rounded-xl border border-orange-100 shadow-sm cursor-pointer hover:bg-orange-100 transition" 
+     onclick="filterByStock('low')">
+    <p class="text-[10px] uppercase font-bold text-orange-600 tracking-widest">Low Inventory (< 20)</p>
+    <h3 class="text-3xl font-bold text-orange-700 mt-2">{{ low_stock }}</h3>
+</div>
+
+<div class="bg-red-50 p-6 rounded-xl border border-red-100 shadow-sm cursor-pointer hover:bg-red-100 transition" 
+     onclick="filterByStock('out')">
+    <p class="text-[10px] uppercase font-bold text-red-600 tracking-widest">Out of Stock</p>
+    <h3 class="text-3xl font-bold text-red-700 mt-2">{{ out_of_stock }}</h3>
+</div>
+</div>
+<div id="statusSection" class="hidden mt-10 pt-10 border-t border-gray-200">
+    <div class="flex justify-between items-center mb-6">
+        <h2 id="statusTitle" class="text-xl font-bold text-gray-800">Inventory Alert</h2>
+        <button onclick="document.getElementById('statusSection').classList.add('hidden')" class="text-sm text-gray-400 hover:text-gray-600  ">Close View</button>
+    </div>
+    <div id="statusGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-20">
+        </div>
+</div>
+           
+
+        </div>
+    </main>
+<script>function openAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+// Simple Edit Function
+function openEditModal(id, name){
+    alert("Editing " + name + " (ID: " + id + ")");
+}
+const allProducts = {{ products_list | default([]) | tojson | safe }};
+
+    function filterByStock(type) {
+        const section = document.getElementById('statusSection');
+        const grid = document.getElementById('statusGrid');
+        const title = document.getElementById('statusTitle');
+        
+        section.classList.remove('hidden');
+        grid.innerHTML = '';
+
+        let filtered = allProducts.filter(p => {
+            const s = p.stock || 0;
+            return type === 'low' ? (s > 0 && s < 20) : (s === 0);
+        });
+
+        title.innerText = type === 'low' ? "Low Inventory Items" : "Out of Stock Items";
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-400">No items match this status.</p>`;
+        } else {
+            filtered.forEach(p => {
+                const stockColor = (p.stock || 0) === 0 ? 'text-red-600' : 'text-orange-600';
+                
+                // Since we cleaned the path in Python, we just point to the folder
+                const imgUrl = `/static/uploads/${p.image_path}` ; 
+
+                grid.innerHTML += `
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                        <div class="h-32 bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                            <img src="${imgUrl}"  
+                                 class="w-full h-full object-cover"
+                                 onerror="this.src='https://via.placeholder.com/300x200?text=Check+Filename';">
+                        </div>
+                        <h4 class="font-bold text-gray-900 truncate">${p.name}</h4>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-sm font-bold ${stockColor}">Stock: ${p.stock}</span>
+                            <span class="text-xs text-gray-400">${p.price} ETB</span>
+                        </div>
+                         
+                    </div>`;
+            });
+        }
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Auto hide alerts after 5 seconds
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+const notificationURL = "{{ url_for('get_notification_count') }}";
+
+async function updateNotificationCount() {
+    try {
+        const res = await fetch(notificationURL);
+        const data = await res.json();
+        const badge = document.getElementById("notificationBadge");
+
+        if (data.count > 0) {
+            badge.innerText = data.count;
+            badge.style.display = "flex";
+        } else {
+            badge.style.display = "none";
+        }
+
+    } catch (err) {
+        console.log("Notification fetch error:", err);
+    
+     }
+}const notificationURL = "{{ url_for('get_notification_count') }}";
+ 
+function updateNotificationCount() {
+    fetch(notificationURL)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            console.log("Notification Count Received:", data.count); // View this in F12 Console
+            const badge = document.getElementById('notificationBadge');
+            
+            if (badge) {
+                if (data.count > 0) {
+                    badge.innerText = data.count;
+                    badge.style.display = 'flex'; // Ensure it's flex to center the number
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching count:', error));
+}
+
+// Check every 10 seconds
+setInterval(updateNotificationCount, 10000);
+updateNotificationCount();
+</script>
+</body>
+</html>
+
+

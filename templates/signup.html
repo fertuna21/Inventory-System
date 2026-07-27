@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p class="text-gray-500 text-sm mt-1">Join the inventory management system.</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold mb-4">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('signup') }}" method="POST" class="space-y-5">
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-2">Name</label>
+                <input type="text" name="name" placeholder="e.g. Fatuma Mohammed" required 
+                       class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-gray-900 transition-all text-sm">
+            </div>
+<div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-2">Username</label>
+                <input type="text" name="username" placeholder="e.g. fatuma_mohammed" required 
+                       class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-gray-900 transition-all text-sm">
+            </div>
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-2">Email</label>
+                <input type="email" name="email" placeholder="e.g. fatuma_mohammed@example.com" required 
+                       class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-gray-900 transition-all text-sm">
+            </div>
+            <div>
+                <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-2">Create Password</label>
+                <input type="password" name="password" placeholder="••••••••" required 
+                       class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-gray-900 transition-all text-sm">
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gray-800 transform active:scale-95 transition-all shadow-lg shadow-gray-200">
+                    Register Account
+                </button>
+            </div>
+        </form>
+        
+        <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p class="text-sm text-gray-500">
+                Already have an account? 
+                <a href="{{ url_for('login') }}" class="text-gray-900 font-bold hover:underline ml-1">Log In</a>
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

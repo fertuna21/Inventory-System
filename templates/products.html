@@ -1,0 +1,608 @@
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+    <!-- Tailwind Play CDN (recommended way) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            content: [],
+            theme: {
+              extend: {}
+            }
+        
+        }
+        </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+        }
+
+        .sidebar-link:hover {
+            background-color: #1F2937;
+            color: white;
+        }
+
+        .btn-primary {
+            background-color: #111827;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #374151;
+        }
+
+        /* This hides the default small arrow in Chrome/Edge so it doesn't overlap our custom one */
+        #catalogue_input::-webkit-calendar-picker-indicator {
+            display: none !important;
+        }
+
+        /* Ensures the input looks consistent across browsers */
+        #catalogue_input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Hide the default browser arrow for datalist */
+        input::-webkit-calendar-picker-indicator {
+            display: none !important;
+        }
+
+        /* Ensure the input looks premium on focus */
+        .stylish-input:focus {
+            background-color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stylish-input::placeholder {
+            color: #9CA3AF;
+            font-weight: 400;
+            /* Optional: change the placeholder color */
+
+        }
+
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        /* Smooth transition for sidebar links */
+    </style>
+</head>
+
+<body class="flex min-h-screen">
+    <aside class="w-64 bg-[#111827] text-gray-400 flex flex-col fixed h-full">
+        <div class="p-8 text-white font-bold text-xl tracking-tight">ADMIN</div>
+        <nav class="flex-1 px-4 space-y-2">
+            <a href="{{ url_for('index') }}"
+                class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Home
+            </a>
+            <a href="{{ url_for('products') }}"
+                class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Products
+            </a>
+            <a href="{{ url_for('catalogues') }}"
+                class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Catalogues
+            </a>
+            <a href="{{ url_for('signup') }}"
+                class="sidebar-link flex items-center px-4 py-3 rounded-lg text-sm transition">
+                Sign Up
+            </a>
+        </nav>
+    </aside>
+
+    <main class="ml-64 flex-1">
+
+        <header
+            class="h-20 bg-white border-b border-gray-200 px-10 flex items-center justify-between sticky top-0 z-10">
+            <h2 class="text-lg font-semibold text-gray-800">Active Inventory</h2>
+
+            <div
+                class="flex items-center bg-gray-100 rounded-full border border-transparent focus-within:border-gray-300 focus-within:bg-white transition-all w-full max-w-md mx-4">
+                <div class="pl-5">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+
+                <input type="text" id="productSearch" onkeyup="liveSearch()" placeholder="Search products..."
+                    class="bg-transparent flex-1 pl-3 pr-2 py-2 text-sm outline-none text-gray-700">
+
+                <button
+                    class="bg-[#0f172a] text-white text-[10px] tracking-widest uppercase font-bold px-6 py-2 rounded-full mr-1 my-1">
+                    Search
+                </button>
+            </div>
+
+            <button onclick="openModal('addModal')"
+                class="btn-primary px-5 py-2 rounded-full text-sm font-medium transition">+ Add New</button>
+        </header>
+
+        <div class="p-10">
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-[10px] uppercase font-bold text-gray-500">Product</th>
+                            <th class="px-6 py-4 text-[10px] uppercase font-bold text-gray-500">Catalogue</th>
+                            <th class="px-6 py-4 text-[10px] uppercase font-bold text-gray-500">Price</th>
+                            <th class="px-6 py-4 text-[10px] uppercase font-bold text-gray-500">Stock</th>
+                            <th class="px-6 py-4 text-[10px] uppercase font-bold text-gray-500 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody" class="divide-y divide-gray-100">
+                        {% for p in products %}
+                        <tr>
+                            <td class="px-6 py-4 font-medium text-gray-900">{{ p.name }}</td>
+
+                            <td class="p-4 text-gray-500">
+                                {{ p.catalogue_name if p.catalogue_name else 'Uncategorized' }}
+                            </td>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ p.price }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ p.stock }}</td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-3">
+                                <div class="flex items-center gap-3">
+
+                                    <button
+                                        onclick="openEditModal('{{ p.id }}', '{{ p.name }}', '{{ p.price }}', '{{ p.stock }}', '{{ p.catalogue_id }}')"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                        Edit
+                                    </button> <a href="{{ url_for('delete_product', id=p.id) }}"
+                                        onclick="return confirm('Are you sure you want to delete this product?')"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </a>
+                                </div>
+                                <form action="{{ url_for('sell_product_manual', id=p.id) }}" method="POST"
+                                    class="inline-flex items-center gap-2">
+                                    <input type="number" name="quantity" min="1" max="{{ p.stock }}" placeholder="Qty"
+                                        required
+                                        class="w-16 px-2 py-1 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+
+                                    <button type="submit"
+                                        class="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 active:scale-95 transition-all shadow-sm">
+                                        Sold
+                                    </button>
+                                </form>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <div id="addModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+
+        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-bold mb-6 text-gray-900">Register New Item</h2>
+
+            <form action="{{ url_for('products') }}" method="POST" enctype="multipart/form-data">
+
+                <div class="mb-4">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Product Title</label>
+                    <input type="text" name="name"
+                        class="w-full border border-gray-200 p-3 rounded-lg mt-1 outline-none" required>
+                </div>
+
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Image</label>
+                    <input type="file" name="image" class="w-full border border-gray-200 p-3 rounded-lg mt-1"
+                        accept="image/*">
+                </div>
+
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-500">Price</label>
+                        <input type="number" step="0.01" name="price"
+                            class="w-full border border-gray-200 p-3 rounded-lg mt-1" required>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-500">Stock</label>
+                        <input type="number" name="stock" class="w-full border border-gray-200 p-3 rounded-lg mt-1"
+                            required>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+
+                    <!-- Label -->
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-gray-700">
+                            Catalogue
+                        </label>
+
+                        <!-- Wrapper -->
+                        <div class="relative" id="catalogue_wrapper">
+
+                            <!-- Input -->
+                            <input id="catalogue_input" type="text" placeholder="Search or select catalogue..."
+                                autocomplete="off" class="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 
+               focus:ring-2 focus:ring-gray-900 focus:border-gray-900
+               outline-none transition-all shadow-sm">
+
+                            <!-- Arrow button -->
+                            <button type="button" onclick="toggleDropdown()" class="absolute right-3 top-1/2 -translate-y-1/2 
+               text-gray-400 hover:text-gray-700 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown -->
+                            <div id="catalogue_dropdown"
+                                class="hidden fixed bg-white border border-gray-200 rounded-xl shadow-2xl z-[9999] overflow-hidden">
+
+
+                                <!-- Items -->
+                                <div id="dropdown_content" class="max-h-60 overflow-y-auto">
+
+                                    {% for c in catalogues %}
+                                    <div onclick="selectCategory('{{ c.name | forceescape }}')" class="px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 
+                   cursor-pointer transition">
+                                        {{ c.name }}
+                                    </div>
+                                    {% endfor %}
+
+                                </div>
+
+                                <!-- No results -->
+                                <div id="no_results" class="hidden px-4 py-3 text-sm text-gray-400 italic border-t">
+                                    No matching categories found
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-4 pt-2">
+                        <button type="submit" class="flex-1 py-3 bg-gray-900 hover:bg-black text-white rounded-xl 
+             font-semibold transition shadow">
+                            Save
+                        </button>
+
+                        <button type="button" onclick="closeModal('addModal')"
+                            class="flex-1 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition">
+                            Cancel
+                        </button>
+                    </div>
+
+                </div>
+                <div id="editModal"
+                    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl">
+                        <h2 class="text-xl font-bold mb-6 text-gray-900">Edit Product</h2>
+                        {% for product in products %}
+                        <form method="POST" action="{{ url_for('edit_product', id=product.id) }}">
+                            <button onclick="openEditModal(
+   ' {{ product.id }}',
+    '{{ product.name }}',
+    '{{ product.price }}',
+    '{{ product.stock }}',
+    '{{ product.catalogue_id }}'
+)">
+                                Edit
+                            </button>
+                        </form>
+
+                        {% endfor %}
+                        <input type="hidden" id="edit_id" name="id">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-gray-500">Product Title</label>
+                            <input type="text" name="name" id="edit_name"
+                                class="w-full border border-gray-200 p-3 rounded-lg mt-1 outline-none" required>
+
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-gray-500">Image</label>
+                            <input type="file" name="image" class="w-full border border-gray-200 p-3 rounded-lg mt-1"
+                                accept="image/*">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-gray-500">Price</label>
+                                <input type="number" name="price"
+                                    class="w-full border border-gray-200 p-3 rounded-lg mt-1" required>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-gray-500">Stock</label>
+                                <input type="number" name="stock" id="edit_stock"
+                                    class="w-full border border-gray-200 p-3 rounded-lg mt-1" required>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase font-bold text-gray-500">Catalogue</label>
+                                <select name="catalogue_id" id="edit_catalogue"
+                                    class="w-full border border-gray-200 p-3 rounded-lg mt-1 bg-gray-50">
+                                    {% for c in catalogues %}
+                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 pt-4">
+                            <button type="button" onclick="closeModal('editModal')"
+                                class="flex-1 py-3 text-gray-500">Cancel</button>
+                            <button type="submit"
+                                class="flex-1 py-3 bg-gray-900 text-white rounded-lg font-bold">Update</button>
+                        </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditModal(id, name, price, stock, catalogue_id) {
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editForm').action = "/edit_product/" + id;
+
+            // Use the ID you set in the HTML input fields
+            document.getElementById('edit_name').value = name;
+
+            // Note: You can't set the value of a file input for security reasons
+            // But we need to make sure these other fields exist:
+            const priceInput = document.querySelector('input[name="price"]');
+            if (priceInput) priceInput.value = price;
+
+            document.getElementById('edit_stock').value = stock;
+            document.getElementById('edit_catalogue').value = catalogue_id;
+        }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function openEditModal(id, name, price, stock, catalogue_id) {
+            // 1. Show the modal
+            document.getElementById('editModal').classList.remove('hidden');
+
+            // 2. Set the form action to the specific product ID
+            document.getElementById('editForm').action = "/edit_product/" + id;
+
+            // 3. Fill the inputs with current data
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_price').value = price;
+            document.getElementById('edit_image').value = image;
+            document.getElementById('edit_stock').value = stock;
+            document.getElementById('edit_catalogue').value = catalogue_id;
+        }
+
+        function liveSearch() {
+            // 1. Get the search term
+            let input = document.getElementById('productSearch');
+            let filter = input.value.toLowerCase();
+
+            // 2. Get the table and all rows in the <tbody>
+
+            let table = document.querySelector("table");
+            let tr = table.getElementsByTagName("tr");
+            let hasResults = false;
+            // 3. Loop through all table rows, starting from index 1 (skip header)
+            for (let i = 1; i < tr.length; i++) {
+                // We search across the whole row's text
+                let rowText = tr[i].innerText.toLowerCase();
+
+                if (rowText.includes(filter)) {
+                    tr[i].style.display = ""; // Show row
+                    hasResults = true;
+                } else {
+                    tr[i].style.display = "none"; // Hide row
+                }
+            }
+
+            // 4. Handle "No Results" message
+            let noResults = document.getElementById('noResults');
+            if (noResults) {
+                noResults.style.display = hasResults ? "none" : "block";
+            }
+        }
+        let isOpen = false;
+
+        function positionDropdown() {
+            const dropdown = document.getElementById('catalogue_dropdown');
+            const input = document.getElementById('catalogue_input');
+            const wrapper = document.getElementById('catalogue_wrapper');
+            if (!dropdown || !input) return;
+            const rect = input.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            // Estimated max height we'll allow (can be adjusted)
+            const desiredMaxHeight = 240; // ~6-8 items
+
+            dropdown.style.maxHeight = 'none'; // reset first
+            let shouldFlipUp = spaceBelow < desiredMaxHeight && spaceAbove > spaceBelow;
+
+
+            if (shouldFlipUp) {
+                // Open upward
+                dropdown.style.bottom = '100%';
+                dropdown.style.top = 'auto';
+                dropdown.style.marginTop = '0';
+                dropdown.style.marginBottom = '8px';
+                const maxPossible = Math.min(spaceAbove - 20, 320);
+                dropdown.style.maxHeight = `${maxPossible}px`;
+                // Limit height to available space above
+
+            } else {
+                // Open downward (default)
+                dropdown.style.top = '100%';
+                dropdown.style.bottom = 'auto';
+                dropdown.style.marginTop = '8px';
+                dropdown.style.marginBottom = '0';
+
+                const maxPossible = Math.min(spaceBelow - 20, 320);
+                dropdown.style.maxHeight = `${maxPossible}px`;
+            }
+        }
+
+        function showDropdown() {
+            const dropdown = document.getElementById('catalogue_dropdown');
+            if (!dropdown) return;
+
+            dropdown.classList.remove('hidden');
+            isOpen = true;
+            positionDropdown();           // position immediately
+        }
+
+        function toggleDropdown() {
+            const dropdown = document.getElementById('catalogue_dropdown');
+            if (!dropdown) return;
+
+            if (isOpen) {
+                dropdown.classList.add('hidden');
+                isOpen = false;
+            } else {
+                showDropdown();
+            }
+        }
+
+
+        function selectCategory(name) {
+            document.getElementById("catalogue_input").value = name;
+            document.getElementById("catalogue_dropdown").classList.add("hidden");
+        }
+
+        // Optional: reposition when window is resized or scrolled
+        window.addEventListener('resize', () => {
+            if (isOpen) positionDropdown();
+        });
+
+        window.addEventListener('scroll', () => {
+            if (isOpen) positionDropdown();
+        }, true);
+
+        function filterDropdown() {
+            const input = document.getElementById('catalogue_input').value.toLowerCase().trim();
+            const items = document.querySelectorAll('#catalogue_dropdown > div:not(#no_results)');
+            const noResults = document.getElementById('no_results');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(input)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            noResults.classList.toggle('hidden', visibleCount > 0);
+            setTimeout(positionDropdown, 10);
+        }
+        const wrapper = document.getElementById("catalogue_wrapper");
+        const input = wrapper.querySelector("input");
+        const dropdown = document.getElementById("catalogue_dropdown");
+        const items = document.querySelectorAll("#dropdown_content div");
+        const noResults = document.getElementById("no_results");
+
+        // 1️⃣ Open dropdown when clicking input
+        input.addEventListener("focus", () => {
+            dropdown.classList.remove("hidden");
+        });
+
+        // 2️⃣ Filter while typing
+        input.addEventListener("input", () => {
+            const value = input.value.toLowerCase();
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(value)) {
+                    item.style.display = "block";
+                    visibleCount++;
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            // Show "no results"
+            if (visibleCount === 0) {
+                noResults.classList.remove("hidden");
+            } else {
+                noResults.classList.add("hidden");
+            }
+        });
+
+        // 3️⃣ Close dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!wrapper.contains(e.target)) {
+                dropdown.classList.add("hidden");
+            }
+        });
+
+        // 4️⃣ When user selects category
+        function selectCategory(name) {
+            input.value = name;
+            dropdown.classList.add("hidden");
+        }
+        function toggleDropdown() {
+            dropdown.classList.toggle("hidden");
+        }
+        function positionDropdown() {
+            const rect = input.getBoundingClientRect();
+            const dropdownHeight = 260; // max height of dropdown
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            // Always match input width + horizontal position
+            dropdown.style.left = rect.left + "px";
+            dropdown.style.width = rect.width + "px";
+
+            // Decide whether to open DOWN or UP
+            if (spaceBelow > dropdownHeight || spaceBelow > spaceAbove) {
+                // Open downward
+                dropdown.style.top = rect.bottom + 6 + "px";
+                dropdown.style.bottom = "auto";
+                dropdown.style.maxHeight = spaceBelow - 20 + "px";
+            } else {
+                // Open upward 🔥
+                dropdown.style.bottom = (window.innerHeight - rect.top + 6) + "px";
+                dropdown.style.top = "auto";
+                dropdown.style.maxHeight = spaceAbove - 20 + "px";
+            }
+        }
+        window.addEventListener("scroll", positionDropdown, true);
+        window.addEventListener("resize", positionDropdown);
+        function openEditModal(id, name, price, stock, catalogue_id) {
+            document.getElementById("edit_id").value = id;
+            document.getElementById("edit_name").value = name;
+            document.getElementById("edit_price").value = price;
+            document.getElementById("edit_stock").value = stock;
+            document.getElementById("edit_catalogue").value = catalogue_id;
+
+            document.getElementById("editModal").classList.remove("hidden");
+        }
+    </script>
+
+</body>
+
+</html>
